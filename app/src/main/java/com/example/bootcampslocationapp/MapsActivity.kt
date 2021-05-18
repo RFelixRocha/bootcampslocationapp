@@ -1,7 +1,11 @@
 package com.example.bootcampslocationapp
 
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import com.example.bootcampslocationapp.databinding.ActivityMapsBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -11,13 +15,17 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMapsBinding
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    private lateinit var lastLocation : Location
+
+    companion object{
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 1
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,19 +53,60 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        // Add a marker in Sydney and move the camera
-        val sydney = LatLng(-3.108394, -59.992839)
-        mMap.addMarker(MarkerOptions().position(sydney).title("Manaus"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+        // Add a marker in Manaus and move the camera
+        // val myPlace = LatLng(-3.108394, -59.992839)
+        // mMap.addMarker(MarkerOptions().position(myPlace).title("Manaus"))
+        // mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myPlace,16.0f))
 
         // We will provide our own zoom controls.
         mMap.uiSettings.isZoomControlsEnabled = true
 
         // Set a listener for marker click.
         mMap.setOnMarkerClickListener(this)
+
+        setUpMap()
     }
 
-    override fun onMarkerClick(p0: Marker): Boolean {
+    private fun setUpMap(){
+
+        if(ActivityCompat.checkSelfPermission(this,android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE)
+
+            return
+        }
+
+        mMap.isMyLocationEnabled = true
+
+        fusedLocationProviderClient.lastLocation.addOnSuccessListener(this) { location ->
+
+            if (location != null){
+                lastLocation = location
+                val currentLatLng = LatLng(location.latitude,location.longitude)
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng,16.0f))
+            }
+        }
+    }
+
+    override fun onMarkerClick(marker: Marker): Boolean {
+        // Retrieve the data from the marker.
+        val clickCount = marker.tag as? Int
+
+        // Check if a click count was set, then display the click count.
+        clickCount?.let {
+            val newClickCount = it + 1
+            marker.tag = newClickCount
+            Toast.makeText(
+                this,
+                "${marker.title} foi clicado $newClickCount vezes.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
+        // Return false to indicate that we have not consumed the event and that we wish
+        // for the default behavior to occur (which is for the camera to move such that the
+        // marker is centered and for the marker's info window to open, if it has one).
         return false
     }
 }
