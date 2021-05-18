@@ -1,6 +1,7 @@
 package com.example.bootcampslocationapp
 
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.location.Location
 import android.os.Bundle
 import android.widget.Toast
@@ -13,8 +14,10 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
@@ -51,12 +54,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
      * installed Google Play services and returned to the app.
      */
     override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
 
-        // Add a marker in Manaus and move the camera
-        // val myPlace = LatLng(-3.108394, -59.992839)
-        // mMap.addMarker(MarkerOptions().position(myPlace).title("Manaus"))
-        // mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myPlace,16.0f))
+        //GoogleMaps instance
+        mMap = googleMap
 
         // We will provide our own zoom controls.
         mMap.uiSettings.isZoomControlsEnabled = true
@@ -64,6 +64,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         // Set a listener for marker click.
         mMap.setOnMarkerClickListener(this)
 
+        //Asks the user's permission and shows the user's location
         setUpMap()
     }
 
@@ -84,9 +85,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             if (location != null){
                 lastLocation = location
                 val currentLatLng = LatLng(location.latitude,location.longitude)
+                placeMarkerOnMap(currentLatLng)
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng,16.0f))
             }
         }
+
+    }
+
+    private fun placeMarkerOnMap(location: LatLng){
+
+        val markerOptions = MarkerOptions().position(location)
+
+        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(resources,R.mipmap.ic_user_location)))
+
+        mMap.addMarker(markerOptions)
+
     }
 
     override fun onMarkerClick(marker: Marker): Boolean {
